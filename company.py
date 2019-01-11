@@ -8,11 +8,10 @@
 from trytond.pool import PoolMeta
 from trytond.model import fields
 
-__metaclass__ = PoolMeta
 __all__ = ['Company']
 
 
-class Company:
+class Company(metaclass=PoolMeta):
     __name__ = 'company.company'
 
     header_html = fields.Text('Header Html')

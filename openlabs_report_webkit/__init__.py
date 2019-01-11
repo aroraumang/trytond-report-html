@@ -35,9 +35,7 @@ class ReportWebkit(Report):
         Translation = pool.get('ir.translation')
         Company = pool.get('company.company')
 
-        # Convert to str as buffer from DB is not supported by StringIO
-        report_content = (str(report.report_content) if report.report_content
-                          else False)
+        report_content = report.report_content or False
         if not report_content:
             raise Exception('Error', 'Missing report file!')
 
@@ -194,4 +192,4 @@ class ReportWebkit(Report):
             args += ' %s %s.pdf' % (file_name, file_name)
             # Execute the command using executor
             execute(args)
-            return open(file_name + '.pdf').read()
+            return open(file_name + '.pdf', 'rb').read()

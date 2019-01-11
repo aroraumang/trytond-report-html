@@ -6,7 +6,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from trytond.pool import Pool
-from company import Company
+from .company import Company
 
 
 def register():

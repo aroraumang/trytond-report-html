@@ -10,10 +10,9 @@
 import unittest
 import tempfile
 
-from pyPdf import PdfFileReader
-import trytond.tests.test_tryton
+from PyPDF2 import PdfFileReader
 from trytond.transaction import Transaction
-from trytond.tests.test_tryton import POOL, USER, with_transaction
+from trytond.tests.test_tryton import activate_module, with_transaction, USER
 from trytond.pool import Pool
 
 from openlabs_report_webkit import ReportWebkit
@@ -40,17 +39,17 @@ class ReportTestCase(unittest.TestCase):
     def setUp(self):
         register()
 
-        trytond.tests.test_tryton.install_module('report_webkit')
-
-        self.Currency = POOL.get('currency.currency')
-        self.Company = POOL.get('company.company')
-        self.Party = POOL.get('party.party')
-        self.User = POOL.get('res.user')
+        activate_module('report_webkit')
 
     def setup_defaults(self):
         """
         Setup the defaults
         """
+        self.Currency = Pool().get('currency.currency')
+        self.Company = Pool().get('company.company')
+        self.Party = Pool().get('party.party')
+        self.User = Pool().get('res.user')
+
         with Transaction().set_context(company=None):
             self.usd, = self.Currency.create([{
                 'name': 'US Dollar',
@@ -80,8 +79,8 @@ class ReportTestCase(unittest.TestCase):
         '''
         Render the report without PDF conversion
         '''
-        UserReport = POOL.get('res.user', type='report')
-        IRReport = POOL.get('ir.action.report')
+        UserReport = Pool().get('res.user', type='report')
+        IRReport = Pool().get('ir.action.report')
 
         self.setup_defaults()
 
@@ -90,15 +89,15 @@ class ReportTestCase(unittest.TestCase):
                 'name': 'HTML Report',
                 'model': 'res.user',
                 'report_name': 'res.user',
-                'report_content': buffer(
-                    '<h1>Hello, {{records[0].name}}!</h1>'
+                'report_content': memoryview(
+                    '<h1>Hello, {{records[0].name}}!</h1>'.encode()
                 ),
                 'extension': 'html',
             }])
             val = UserReport.execute([USER], {})
-            self.assertEqual(val[0], u'html')
+            self.assertEqual(val[0], 'html')
             self.assertEqual(
-                str(val[1]), '<h1>Hello, Administrator!</h1>'
+                val[1], '<h1>Hello, Administrator!</h1>'.encode()
             )
 
     @with_transaction()
@@ -106,8 +105,8 @@ class ReportTestCase(unittest.TestCase):
         '''
         Render the report without PDF conversion but having unicode template
         '''
-        UserReport = POOL.get('res.user', type='report')
-        IRReport = POOL.get('ir.action.report')
+        UserReport = Pool().get('res.user', type='report')
+        IRReport = Pool().get('ir.action.report')
 
         self.setup_defaults()
 
@@ -116,16 +115,16 @@ class ReportTestCase(unittest.TestCase):
                 'name': 'HTML Report',
                 'model': 'res.user',
                 'report_name': 'res.user',
-                'report_content': buffer(
-                    "<h1>Héllø, {{data['name']}}!</h1>"
+                'report_content': memoryview(
+                    "<h1>Héllø, {{data['name']}}!</h1>".encode()
                 ),
                 'extension': 'html',
             }])
 
-            val = UserReport.execute([USER], {'name': u'Cédric'})
-            self.assertEqual(val[0], u'html')
+            val = UserReport.execute([USER], {'name': 'Cédric'})
+            self.assertEqual(val[0], 'html')
             self.assertEqual(
-                str(val[1]), '<h1>Héllø, Cédric!</h1>'
+                val[1], '<h1>Héllø, Cédric!</h1>'.encode()
             )
 
     @with_transaction()
@@ -133,8 +132,8 @@ class ReportTestCase(unittest.TestCase):
         '''
         Ensure that escaping works
         '''
-        UserReport = POOL.get('res.user', type='report')
-        IRReport = POOL.get('ir.action.report')
+        UserReport = Pool().get('res.user', type='report')
+        IRReport = Pool().get('ir.action.report')
 
         self.setup_defaults()
 
@@ -143,16 +142,17 @@ class ReportTestCase(unittest.TestCase):
                 'name': 'HTML Report',
                 'model': 'res.user',
                 'report_name': 'res.user',
-                'report_content': buffer(
-                    "<h1>Héllø, {{data['name']}}!</h1>"
+                'report_content': memoryview(
+                    "<h1>Héllø, {{data['name']}}!</h1>".encode()
                 ),
                 'extension': 'html',
             }])
 
-            val = UserReport.execute([USER], {'name': u'<script></script>'})
-            self.assertEqual(val[0], u'html')
+            val = UserReport.execute([USER], {'name': '<script></script>'})
+            self.assertEqual(val[0], 'html')
             self.assertEqual(
-                str(val[1]), '<h1>Héllø, &lt;script&gt;&lt;/script&gt;!</h1>'
+                val[1],
+                '<h1>Héllø, &lt;script&gt;&lt;/script&gt;!</h1>'.encode()
             )
 
     @with_transaction()
@@ -160,8 +160,8 @@ class ReportTestCase(unittest.TestCase):
         '''
         Render the report in PDF
         '''
-        UserReport = POOL.get('res.user', type='report')
-        IRReport = POOL.get('ir.action.report')
+        UserReport = Pool().get('res.user', type='report')
+        IRReport = Pool().get('ir.action.report')
 
         self.setup_defaults()
 
@@ -170,8 +170,8 @@ class ReportTestCase(unittest.TestCase):
                 'name': 'HTML Report',
                 'model': 'res.user',
                 'report_name': 'res.user',
-                'report_content': buffer(
-                    "<h1>Héllø, {{data['name']}}!</h1>"
+                'report_content': memoryview(
+                    "<h1>Héllø, {{data['name']}}!</h1>".encode()
                 ),
                 'extension': 'pdf',
             }])
@@ -179,14 +179,14 @@ class ReportTestCase(unittest.TestCase):
             # Set Pool.test as False as we need the report to be generated
             # as PDF
             Pool.test = False
-            val = UserReport.execute([USER], {'name': u'Cédric'})
-            self.assertEqual(val[0], u'pdf')
+            val = UserReport.execute([USER], {'name': 'Cédric'})
+            self.assertEqual(val[0], 'pdf')
 
             # Revert Pool.test back to True for other tests to run normally
             Pool.test = True
 
             with tempfile.TemporaryFile() as file:
-                file.write(str(val[1]))
+                file.write(val[1])
                 pdf = PdfFileReader(file)
 
                 # Probably the only thing you can check from a shitty PDF

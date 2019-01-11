@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This file is part of Tryton. The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
 import re
@@ -6,7 +6,7 @@ import os
 import time
 import sys
 import unittest
-import ConfigParser
+from configparser import ConfigParser
 from setuptools import setup, Command
 
 
@@ -72,7 +72,7 @@ class PostgresTest(Command):
         sys.exit(-1)
 
 
-config = ConfigParser.ConfigParser()
+config = ConfigParser()
 config.readfp(open('tryton.cfg'))
 info = dict(config.items('tryton'))
 for key in ('depends', 'extras_depend', 'xml'):
@@ -135,10 +135,13 @@ setup(
         'trytond.modules.%s' % MODULE,
     ],
     package_data={
-        'trytond.modules.%s' % MODULE: info.get('xml', []) +
-        info.get('translation', []) +
-        ['tryton.cfg', 'locale/*.po', 'tests/*.rst', 'reports/*.odt'] +
-        ['view/*.xml'],
+        'trytond.modules.%s' % MODULE: info.get('xml', []) + info.get(
+            'translation', []
+        ) + [
+            'tryton.cfg', 'locale/*.po', 'tests/*.rst', 'reports/*.odt'
+        ] + [
+            'view/*.xml'
+        ],
     },
     package_dir={
         'openlabs_report_webkit': 'openlabs_report_webkit',
@@ -148,7 +151,7 @@ setup(
     license='GPL-3',
     install_requires=requires,
     tests_require=[
-        'pyPDF',     # Check if the resultant pdf has the same content
+        'PyPDF2',     # Check if the resultant pdf has the same content
     ],
     extras_require={
         'weasyprint': ['weasyprint']

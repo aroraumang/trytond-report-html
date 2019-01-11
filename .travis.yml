@@ -1,6 +1,7 @@
 language: python
+dist: xenial
 python:
-  - "2.7"
+  - "3.6"
 before_script:
   - sudo apt-get update
   - sudo apt-get install -y openssl build-essential xorg libssl-dev libxrender-dev wget xvfb fontconfig cabextract xfonts-75dpi
